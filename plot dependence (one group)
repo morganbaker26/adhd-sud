@@ -1,0 +1,24 @@
+# This script plots the proportion of individuals with a documented substance dependence diagnosis
+
+plot_df <- YOUR_DF_HERE ## EDIT HERE
+
+# Create new df summarizing condition_clean
+  proportion_dependence <- plot_df %>% 
+  
+  summarize( Opioids = mean(opioid_dx),
+             Nicotine = mean(nicotine_dx),
+             Alcohol =  mean(alcohol_dx),
+             Cocaine = mean(cocaine_dx),
+             Cannabis = mean(cannabis_dx),
+    )
+
+# Pivot
+  proportion_dependence_pivot <- proportion_dependence %>%
+    pivot_longer(Opioids:Cannabis ,names_to = "Substance", values_to = "Proportion")
+
+# Plot :)
+  proportion_dependence_pivot %>% 
+    ggplot(aes(x = Substance, y = Proportion, fill = Substance)
+    )  + geom_col(position = 'dodge'
+    ) + labs(title = "Proportion of ADHD individuals with a substance dependence diagnosis",
+             fill = NULL)
