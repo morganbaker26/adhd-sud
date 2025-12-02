@@ -1,0 +1,105 @@
+# Setup
+  library(tidyverse)
+  library(readr)
+
+# Load data
+  condition_df <- read_csv("ADHD cohort/ADHD_condition_df.csv") # EDIT HERE
+
+####----------------------####
+  
+# Remove known irrelevant columns
+
+  condition_short <- condition_df %>%
+    select(person_id,                       # Keep person_id, concept name,
+           standard_concept_name,           # condition start date
+           condition_start_datetime)
+  
+# Define buckets for removal/filtration
+    
+    # Specify which rows to remove based on contents of diagnosis column
+      rm_list <- c(
+        "Hyperkinesis with developmental delay",
+        "Hyperkinetic conduct disorder",
+        "Hyperactive behavior",
+        "Nondependent alcohol abuse",
+        "Nondependent alcohol abuse, continuous",
+        "Nondependent alcohol abuse, episodic",
+        "Nondependent alcohol abuse in remission",
+        "Alcohol induced disorder co-occurrent and due to alcohol dependence"
+      )
+      
+    # Define buckets for ADHD subtypes  
+      ADHD_H <- "Attention deficit hyperactivity disorder, predominantly hyperactive impulsive type"
+      ADHD_U <- c("Attention deficit hyperactivity disorder",
+                  "Adult attention deficit hyperactivity disorder",
+                  "Child attention deficit disorder",
+                  "Undifferentiated attention deficit disorder"
+      )
+      ADHD_PI <- "Attention deficit hyperactivity disorder, predominantly inattentive type"
+      ADHD_C <- "Attention deficit hyperactivity disorder, combined type"
+      
+# Filter and transform
+
+  condition_short <- condition_short %>% # Modify condition_short
+    
+    # Filter out rows in rm_list
+    filter( !standard_concept_name %in% rm_list ) %>% 
+    
+    # Create dx_year column from first 4 digits of condition_start_datetime
+    mutate( dx_year = substr(condition_start_datetime, 1, 4) ) %>%
+  
+    # Rename standard_concept_name column to "diagnosis"
+    rename(diagnosis = standard_concept_name) %>% 
+    
+    distinct() # Remove duplicate rows
+  
+# Create ADHD_df containing an ADHD diagnosis for each person_id
+      
+      dx <- condition_short$diagnosis # Create shorthand variable
+      
+      ADHD_dx <- unique(              # Create list of unique ADHD diagnoses
+        
+        dx[grepl("attention", dx, ignore.case = TRUE)] ) # Grab rows containing
+                                                         # "attention" in dx column
+      
+  ADHD_df <- condition_short %>%
+    filter( diagnosis %in% ADHD_dx ) %>% # Keep rows w ADHD dxs
+
+    filter( as.numeric(dx_year) < 2013 ) %>% # Remove rows with dx_year before 2013
+  
+    # Create new column "dx_match" with ADHD subtype shortnames
+        mutate( dx_match = case_when(
+          diagnosis %in% ADHD_H ~ "Hyperactive-impulsive",
+          diagnosis %in% ADHD_C ~ "Combined",
+          diagnosis %in% ADHD_PI ~ "Inattentive",
+          diagnosis %in% ADHD_U ~ "Unspecified" ) 
+        )%>%
+        
+        select( person_id, dx_match ) %>%
+        
+        distinct() %>%
+    arrange(person_id)
+  
+  # Define priorities for ADHD diagnosis retention
+    # and create column ADHD_dx containing a single ADHD diagnosis shortname
+    # for each person_id
+  
+      ADHD_df <- ADHD_df %>%
+        group_by(person_id) %>%
+        
+        mutate( ADHD_dx = 
+                  case_when(
+                    n() == 1 ~ dx_match,
+                    n() >= 2 & (any(dx_match == "Inattentive")) 
+                    & (any(dx_match == "Unspecified")) ~ "Inattentive",
+                    n() >= 2 & (any(dx_match == "Hyperactive-impulsive")) 
+                    & (any(dx_match == "Unspecified")) ~ "Hyperactive-impulsive",
+                    n() >= 2 & (any(dx_match == "Combined")) ~ "Combined",
+                    n() >= 2 & (any(dx_match == "Inattentive")) 
+                    & (any(dx_match == "Hyperactive-impulsive")) ~ "Combined"
+                  )) %>%
+    
+    select(person_id, ADHD_dx) %>%
+    distinct() %>%
+    ungroup()
+  
