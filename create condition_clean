@@ -1,0 +1,124 @@
+# This block creates condition_clean by cleaning and reorganizing condition_df.
+
+    # Load dataset
+      condition_df <- read_csv('anon_ADHD_condition_df.csv')
+
+    # Remove all unnecessary rows (DECREASES N OF COHORT!!)
+
+      # Specify which rows to remove based on contents of diagnosis column
+      rm_list <- c(
+        "Hyperkinesis with developmental delay",
+        "Hyperkinetic conduct disorder",
+        "Hyperactive behavior",
+        "Nondependent alcohol abuse",
+        "Nondependent alcohol abuse, continuous",
+        "Nondependent alcohol abuse, episodic",
+        "Nondependent alcohol abuse in remission",
+        "Alcohol induced disorder co-occurrent and due to alcohol dependence"
+      )
+
+      condition_filtered <- condition_df %>% # Create condition_filtered df...
+
+        rename(diagnosis = standard_concept_name) %>% # Rename column
+        filter( !diagnosis %in% rm_list ) %>% # Filter out rows containing specified values
+        distinct() # Remove duplicate rows
+
+    # Define ADHD diagnosis buckets
+      dx <- condition_filtered$diagnosis # create shorthand variable
+
+      ADHD_dx <- unique(
+        dx[grepl("attention", dx, ignore.case = TRUE)] )
+
+      # ADHD subtypes  
+        ADHD_H <- "Attention deficit hyperactivity disorder, predominantly hyperactive impulsive type"
+        ADHD_U <- c("Attention deficit hyperactivity disorder",
+                    "Adult attention deficit hyperactivity disorder",
+                    "Child attention deficit disorder",
+                    "Undifferentiated attention deficit disorder"
+        )
+        ADHD_PI <- "Attention deficit hyperactivity disorder, predominantly inattentive type"
+        ADHD_C <- "Attention deficit hyperactivity disorder, combined type"  
+
+    # Create ADHD_df from person_id and cleaned ADHD dxs
+
+      ADHD_df <- condition_filtered %>%
+        filter( diagnosis %in% ADHD_dx ) %>%
+
+        mutate( dx_match = case_when(
+          diagnosis %in% ADHD_H ~ "Hyperactive-impulsive",
+          diagnosis %in% ADHD_C ~ "Combined",
+          diagnosis %in% ADHD_PI ~ "Inattentive",
+          diagnosis %in% ADHD_U ~ "Unspecified" ) 
+          )%>%
+
+        select( person_id, dx_match ) %>%
+
+        distinct() %>%
+        arrange(person_id)
+
+      # Remove duplicate rows/diagnoses, set priorities for final dx assignment
+        ADHD_df <- ADHD_df %>%
+          group_by(person_id) %>%
+
+          mutate( ADHD_dx = 
+            case_when(
+              n() == 1 ~ dx_match,
+              n() >= 2 & (any(dx_match == "Inattentive")) 
+                          & (any(dx_match == "Unspecified")) ~ "Inattentive",
+              n() >= 2 & (any(dx_match == "Hyperactive-impulsive")) 
+                          & (any(dx_match == "Unspecified")) ~ "Hyperactive-impulsive",
+              n() >= 2 & (any(dx_match == "Combined")) ~ "Combined",
+              n() >= 2 & (any(dx_match == "Inattentive")) 
+                        & (any(dx_match == "Hyperactive-impulsive")) ~ "Combined"
+            )) %>%
+
+          select(person_id, ADHD_dx) %>%
+          distinct() %>%
+          ungroup()
+
+    # Create dependence_df from person_id and cleaned dependence dxs
+      dependence_df <- condition_filtered %>%
+        filter( !(diagnosis %in% ADHD_dx) ) %>% # Filter out ADHD diagnoses
+        rename( dependence = diagnosis )
+
+    # Aggregate diagnoses by substance and store data in logical variables
+
+      # Merge ADHD_df and dependence_df
+        condition_clean <- full_join(
+        ADHD_df,
+        dependence_df )
+
+        # Select columns needed for analysis
+          condition_clean <- condition_clean %>% # intermediary df
+
+          select(person_id, ADHD_dx, dependence) %>%
+
+        # Create new binary columns for substance-specific diagnoses
+          mutate(
+            opioid_dx = grepl("opioid", dependence, ignore.case = TRUE) |
+                         grepl("heroin", dependence, ignore.case = TRUE),
+
+            alcohol_dx = grepl("alcohol", dependence, ignore.case = TRUE) &
+                          !grepl("nondependence", dependence, ignore.case = TRUE),
+
+            cocaine_dx = grepl("cocaine", dependence, ignore.case = TRUE),
+
+            cannabis_dx = grepl("cannabis", dependence, ignore.case = TRUE),
+
+            nicotine_dx = grepl("nicotine", dependence, ignore.case = TRUE) |
+                           grepl("tobacco", dependence, ignore.case = TRUE),
+
+            methadone_dx = grepl("methadone", dependence, ignore.case = TRUE)
+            )%>%
+
+        # Group by person and collapse to one row per person
+
+          group_by(person_id) %>%
+          summarize(
+            opioid_dx = any(opioid_dx),
+            alcohol_dx = any(alcohol_dx),
+            cocaine_dx = any(cocaine_dx),
+            cannabis_dx = any(cannabis_dx),
+            nicotine_dx = any(nicotine_dx),
+            methadone_dx = any(methadone_dx)
+        )
