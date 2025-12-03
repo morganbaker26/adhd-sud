@@ -1,24 +1,29 @@
 #### ---------------------------------------------------------------------- ####
 
+# This script combines elements from person_df and zip_df to
+#   create NO_ADHD_demographics
+
 #### ---------------------------------------------------------------------- ####
 
 # Load person_df and zip_df (or specify an already-loaded df)
-  person_df <- read_csv("ADHD cohort/ADHD_person_df.csv") # EDIT HERE
-  zip_df <- read_csv("ADHD cohort/ADHD_zip_df.csv") # EDIT HERE
 
-                     EDIT WITH CAUTION BELOW THIS LINE
+  person_df <- NO_ADHD_person_df # EDIT HERE
+  zip_df <- read_csv("NO ADHD cohort/NO_ADHD_zip_df") # EDIT HERE
+
+
 #### ---------------------------------------------------------------------- ####
 
 person_df <- person_df %>%
-      
-  # Create birth_year column and remove date_of_birth
-      mutate(birth_year = year(date_of_birth) %>%
-      select(-date_of_birth)
-    
+  
+# Create birth_year column and remove date_of_birth
+    mutate( birth_year = year(date_of_birth) ) %>%
+    select(-date_of_birth) 
+         
 # Create NO_ADHD_demographics by joining person_df and zip_df
     NO_ADHD_demographics <- left_join(person_df, zip_df, by = 'person_id') %>%
       mutate( zip_observation_date = substr(observation_datetime, 1, 10) ) %>%
       select( !observation_datetime )
-    
+         
 # Clean up workspace - remove objects not needed for future analysis
     rm(zip_df, person_df)
+         
