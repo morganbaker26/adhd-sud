@@ -83,7 +83,7 @@
   ADHD_df <- condition_df %>%
     filter( diagnosis %in% ADHD_dx ) %>% # Keep rows w ADHD dxs
 
-    filter( as.numeric(dx_year) < 2013 ) %>% # Remove rows with dx_year before 2013
+    filter( as.numeric(dx_year) >= 2013 ) %>% # Remove rows with dx_year before 2013
   
     # Create new column "dx_match" with ADHD subtype shortnames
         mutate( dx_match = case_when(
