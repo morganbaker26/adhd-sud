@@ -1,0 +1,91 @@
+#Clean person_df
+
+#Remove unneeded columns
+
+person_recode <- ADHD_person_df %>% # replace with name of loaded dataset
+  select(person_id, 
+         gender, 
+         date_of_birth, 
+         race, 
+         ethnicity, 
+         sex_at_birth, 
+         self_reported_category
+  )
+
+# Recode columns for clarity/simplicity
+
+person_recode <- person_recode %>%
+  mutate(
+    
+    # Recode gender
+    gender = case_match(gender,
+                        "Gender Identity: Non Binary" ~ "Nonbinary",
+                        "Female" ~ "Female",
+                        "Male" ~ "Male",
+                        "PMI: Skip" ~ "Skipped",
+                        "Gender Identity: Transgender" ~ "Transgender",
+                        "Not man only, not woman only, prefer not to answer, or skipped" ~ "Skipped",
+                        "Gender Identity: Additional Options" ~ "Other",
+                        "I prefer not to answer" ~ "Skipped",
+                        .default = "ERROR"
+    ),
+    
+    # Recode race
+    race = case_match(race,
+                      "None of these" ~ "Other",
+                      "I prefer not to answer" ~ "Skipped",
+                      "Middle Eastern or North African" ~ "MENA",
+                      "Asian" ~ "Asian",
+                      "PMI: Skip" ~ "Skipped",
+                      "Native Hawaiian or Other Pacific Islander" ~ "Native Hawaiian/Pacific Islander",
+                      "American Indian or Alaska Native" ~ "American Indian/Alaska Native",
+                      "More than one population" ~ "Multiple",
+                      "White" ~ "White",
+                      "Black or African American" ~ "Black",
+                      "None Indicated" ~ "Skipped",
+                      .default = "ERROR"
+    ),
+    
+    # Recode ethnicity
+    ethnicity = case_match(
+      ethnicity,
+      "What Race Ethnicity: Race Ethnicity None Of These" ~ "Other",
+      "PMI: Prefer Not To Answer" ~ "Skipped",
+      "Not Hispanic or Latino" ~ "Non-Hispanic/Latino",
+      "PMI: Skip" ~ "Skipped",
+      "Hispanic or Latino" ~ "Hispanic/Latino",
+      .default = "ERROR"
+    ),
+    
+    # Recode sex at birth
+    sex_at_birth = case_match(
+      sex_at_birth,
+      "Intersex" ~ "Intersex",
+      "Female" ~ "Female",
+      "Male" ~ "Male",
+      "I prefer not to answer" ~ "Skipped",
+      "PMI: Skip" ~ "Skipped",
+      "Sex At Birth: Sex At Birth None Of These" ~ "Other",
+      .default = "ERROR"
+    ),
+    
+    # Recode self reported category
+    self_reported_category = case_match(
+      self_reported_category,
+      "None of these" ~ "Other",
+      "I prefer not to answer" ~ "Skipped",
+      "Middle Eastern or North African" ~ "MENA",
+      "Asian" ~ "Asian",
+      "PMI: Skip" ~ "Skipped",
+      "Native Hawaiian or Other Pacific Islander" ~ "Native Hawaiian/Pacific Islander",
+      "American Indian or Alaska Native" ~ "American Indian/Alaska Native",
+      "More than one population" ~ "Multiple",
+      "Black or African American" ~ "Black",
+      "What Race Ethnicity: Hispanic" ~ "Hispanic",
+      "White" ~ "White",
+      .default = "ERROR"
+    ),
+    
+    # Create birth_year from date_of_birth
+    birth_year = year(date_of_birth)
+  )
