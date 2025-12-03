@@ -1,0 +1,5 @@
+Scripts 1 through 3 produce the dataframes ADHD_conditions and ADHD_demographics from source data generated via All of Us Researcher Workbench query. Source data used for the scripts in this file include:
+
+    ADHD_condition_df
+    ADHD_person_df
+    ADHD_zip_df
