@@ -12,9 +12,10 @@ NO_ADHD_conditions <- NO_ADHD_condition_df %>%
   select(person_id, dependence_dx = standard_concept_name) %>%
   filter(person_id %in% NO_ADHD_demographics$person_id)
 
-# Aggregate diagnoses by substance and store data in binary variables
+# Aggregate diagnoses by substance and store data in logical variables
 NO_ADHD_conditions <- NO_ADHD_conditions %>%
-  # Create new binary columns for substance-specific diagnoses
+
+  # Create new logical columns for substance-specific diagnoses
   mutate(
     opioid_dx = grepl("opioid", dependence_dx, ignore.case = TRUE) |
       grepl("heroin", dependence_dx, ignore.case = TRUE),
@@ -56,3 +57,8 @@ NO_ADHD_conditions <- NO_ADHD_conditions %>%
     nicotine_dx = replace_na(nicotine_dx, FALSE),
     methadone_dx = replace_na(methadone_dx, FALSE)
   )
+
+# Coerce columns to logical data type
+NO_ADHD_conditions <- NO_ADHD_conditions %>%
+  mutate(across(c(opioid_dx, alcohol_dx, cocaine_dx, cannabis_dx, 
+                  nicotine_dx, methadone_dx), as.logical))
