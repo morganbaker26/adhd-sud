@@ -7,17 +7,13 @@ library(tidyverse)
 #### ---------------------------------------------------------------------- ####
 
 # Retain rows in NO_ADHD_condition_df matching a person_id in NO_ADHD_demographics;
-  # store in NO_ADHD_conditions
+# store in NO_ADHD_conditions
+NO_ADHD_conditions <- NO_ADHD_condition_df %>%
+  select(person_id, dependence_dx = standard_concept_name) %>%
+  filter(person_id %in% NO_ADHD_demographics$person_id)
 
-    NO_ADHD_conditions <- NO_ADHD_condition_df %>%
-      select( person_id, dependence_dx = standard_concept_name ) %>%
-      filter( person_id %in% NO_ADHD_demographics$person_id)
-      
-  
 # Aggregate diagnoses by substance and store data in binary variables
-
-  NO_ADHD_conditions <- NO_ADHD_conditions %>% 
-  
+NO_ADHD_conditions <- NO_ADHD_conditions %>%
   # Create new binary columns for substance-specific diagnoses
   mutate(
     opioid_dx = grepl("opioid", dependence_dx, ignore.case = TRUE) |
@@ -34,10 +30,10 @@ library(tidyverse)
       grepl("tobacco", dependence_dx, ignore.case = TRUE),
     
     methadone_dx = grepl("methadone", dependence_dx, ignore.case = TRUE),
-
+    
     ADHD_dx = "Control (No ADHD)"
-  )%>%
-  
+  ) %>%
+
   # Group by person and collapse to one row per person
   group_by(person_id) %>%
   summarize(
@@ -46,15 +42,17 @@ library(tidyverse)
     cocaine_dx = any(cocaine_dx),
     cannabis_dx = any(cannabis_dx),
     nicotine_dx = any(nicotine_dx),
-    methadone_dx = any(methadone_dx)
+    methadone_dx = any(methadone_dx),
+    ADHD_dx = ADHD_dx
   )
 
 # Replace NA values with "FALSE"
-  NO_ADHD_conditions <- NO_ADHD_conditions %>%
-    mutate( opioid_dx = replace_na(opioid_dx, FALSE),
-            alcohol_dx = replace_na(alcohol_dx, FALSE),
-            cocaine_dx = replace_na(cocaine_dx, FALSE),
-            cannabis_dx = replace_na(cannabis_dx, FALSE),
-            nicotine_dx = replace_na(nicotine_dx, FALSE),
-            methadone_dx = replace_na(methadone_dx, FALSE)
-            )
+NO_ADHD_conditions <- NO_ADHD_conditions %>%
+  mutate(
+    opioid_dx = replace_na(opioid_dx, FALSE),
+    alcohol_dx = replace_na(alcohol_dx, FALSE),
+    cocaine_dx = replace_na(cocaine_dx, FALSE),
+    cannabis_dx = replace_na(cannabis_dx, FALSE),
+    nicotine_dx = replace_na(nicotine_dx, FALSE),
+    methadone_dx = replace_na(methadone_dx, FALSE)
+  )
