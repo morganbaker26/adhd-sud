@@ -12,11 +12,11 @@ combined_df <- bind_rows(
 
 # Match
 matched <- matchit(
-  ADHD ~ sex_at_birth + birth_year,
+  ADHD ~ sex_at_birth + birth_year + self_reported_category,
   data = combined_df,
   method = "nearest",
   exact = ~sex_at_birth,
-  ratio = 5,                       # 5 controls per case
+  ratio = 4,                       # 4 controls per case
   replace = FALSE
 )
 
