@@ -33,7 +33,9 @@ library(tidyverse)
     nicotine_dx = grepl("nicotine", dependence_dx, ignore.case = TRUE) |
       grepl("tobacco", dependence_dx, ignore.case = TRUE),
     
-    methadone_dx = grepl("methadone", dependence_dx, ignore.case = TRUE)
+    methadone_dx = grepl("methadone", dependence_dx, ignore.case = TRUE),
+
+    ADHD_dx = "Control (No ADHD)"
   )%>%
   
   # Group by person and collapse to one row per person
@@ -56,6 +58,3 @@ library(tidyverse)
             nicotine_dx = replace_na(nicotine_dx, FALSE),
             methadone_dx = replace_na(methadone_dx, FALSE)
             )
-
-# Clean up workspace
-  rm(ADHD_df, ADHD_dependence_df)
