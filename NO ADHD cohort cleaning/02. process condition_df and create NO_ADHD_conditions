@@ -45,7 +45,7 @@ NO_ADHD_conditions <- NO_ADHD_conditions %>%
     nicotine_dx = any(nicotine_dx),
     methadone_dx = any(methadone_dx),
     ADHD_dx = ADHD_dx
-  )
+  ) %>% ungroup()
 
 # Replace NA values with "FALSE"
 NO_ADHD_conditions <- NO_ADHD_conditions %>%
