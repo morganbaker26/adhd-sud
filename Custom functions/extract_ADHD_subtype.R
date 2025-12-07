@@ -63,5 +63,5 @@ extract_ADHD_subtype <- function(data, id_column, dx_column) {
         any({{dx_column}} %in% ADHD_U) ~ "Unspecified",
         TRUE ~ "None"
       )) %>%
-   summarize("ADHD subtype" = first(ADHD), .groups = "drop")
+   summarize("ADHD_subtype" = first(ADHD), .groups = "drop")
 }
