@@ -1,0 +1,164 @@
+library(tidyverse)
+library(MatchIt)
+library(cobalt)
+
+# Define function: clean_person_df()
+  clean_person_df <- function(data) {
+
+  data %>%
+    select(person_id, gender, date_of_birth, race, 
+             ethnicity, sex_at_birth, self_reported_category) %>%
+    mutate(
+      # Recode gender
+      gender = case_match(gender,
+                          "Gender Identity: Non Binary" ~ "Nonbinary",
+                          "Female" ~ "Female",
+                          "Male" ~ "Male",
+                          "PMI: Skip" ~ "Skipped",
+                          "Gender Identity: Transgender" ~ "Transgender",
+                          "Not man only, not woman only, prefer not to answer, or skipped" ~ "Skipped",
+                          "Gender Identity: Additional Options" ~ "Other",
+                          "I prefer not to answer" ~ "Skipped",
+                          .default = "ERROR"),
+      
+      # Recode race
+      race = case_match(race,
+                        "None of these" ~ "Other",
+                        "I prefer not to answer" ~ "Skipped",
+                        "Middle Eastern or North African" ~ "MENA",
+                        "Asian" ~ "Asian",
+                        "PMI: Skip" ~ "Skipped",
+                        "Native Hawaiian or Other Pacific Islander" ~ "Native Hawaiian/Pacific Islander",
+                        "American Indian or Alaska Native" ~ "American Indian/Alaska Native",
+                        "More than one population" ~ "Multiple",
+                        "White" ~ "White",
+                        "Black or African American" ~ "Black",
+                        "None Indicated" ~ "Skipped",
+                        .default = "ERROR"),
+    
+      # Recode ethnicity
+      ethnicity = case_match(
+        ethnicity,
+        "What Race Ethnicity: Race Ethnicity None Of These" ~ "Other",
+        "PMI: Prefer Not To Answer" ~ "Skipped",
+        "Not Hispanic or Latino" ~ "Non-Hispanic/Latino",
+        "PMI: Skip" ~ "Skipped",
+        "Hispanic or Latino" ~ "Hispanic/Latino",
+        .default = "ERROR"),
+    
+      # Recode sex at birth
+      sex_at_birth = case_match(
+        sex_at_birth,
+        "Intersex" ~ "Intersex",
+        "Female" ~ "Female",
+        "Male" ~ "Male",
+        "I prefer not to answer" ~ "Skipped",
+        "PMI: Skip" ~ "Skipped",
+        "Sex At Birth: Sex At Birth None Of These" ~ "Other",
+        .default = "ERROR"),
+    
+      # Recode self reported category
+      self_reported_category = case_match(
+        self_reported_category,
+        "None of these" ~ "Other",
+        "I prefer not to answer" ~ "Skipped",
+        "Middle Eastern or North African" ~ "MENA",
+        "Asian" ~ "Asian",
+        "PMI: Skip" ~ "Skipped",
+        "Native Hawaiian or Other Pacific Islander" ~ "Native Hawaiian/Pacific Islander",
+        "American Indian or Alaska Native" ~ "American Indian/Alaska Native",
+        "More than one population" ~ "Multiple",
+        "Black or African American" ~ "Black",
+        "What Race Ethnicity: Hispanic" ~ "Hispanic",
+        "White" ~ "White",
+        .default = "ERROR"),
+    
+      # Create birth_year from date_of_birth
+      birth_year = year(date_of_birth)
+    ) %>%
+  select(-date_of_birth) %>%
+  arrange(person_id, birth_year, gender, sex_at_birth, 
+          race, ethnicity, self_reported_category)
+
+}
+  
+# Define function: extract_ADHD_subtype()
+extract_ADHD_subtype <- function(data, id_column, dx_column) {
+
+  # Define list of ADHD diagnoses
+    dx_list_ADHD <- c("Attention deficit hyperactivity disorder, combined type",
+                      "Attention deficit hyperactivity disorder, predominantly inattentive type",
+                      "Attention deficit hyperactivity disorder, predominantly hyperactive impulsive type",
+                      "Attention deficit hyperactivity disorder",
+                      "Adult attention deficit hyperactivity disorder",
+                      "Child attention deficit disorder",
+                      "Undifferentiated attention deficit disorder")
+  
+  # Define buckets for ADHD subtypes  
+      ADHD_H <- "Attention deficit hyperactivity disorder, predominantly hyperactive impulsive type"
+      ADHD_U <- c("Attention deficit hyperactivity disorder",
+                  "Adult attention deficit hyperactivity disorder",
+                  "Child attention deficit disorder",
+                  "Undifferentiated attention deficit disorder"
+      )
+      ADHD_PI <- "Attention deficit hyperactivity disorder, predominantly inattentive type"
+      ADHD_C <- "Attention deficit hyperactivity disorder, combined type"
+  
+  data %>%
+    distinct() %>%
+    select({{id_column}},{{dx_column}}) %>%
+    group_by({{id_column}}) %>%
+
+    mutate( ADHD = 
+      case_when(
+        # ADHD = "None" if no ADHD diagnosis is present
+        !any({{dx_column}} %in% dx_list_ADHD) ~ "None", 
+        # ADHD = "Combined" if combined diagnosis is present OR
+        any({{dx_column}} %in% ADHD_C) |
+          # If hyperactive and inattentive diagnoses co-occur
+          (any({{dx_column}} %in% ADHD_PI) & any({{dx_column}} %in% ADHD_H)) ~ "Combined",
+        # ADHD = "Inattentive" if inattentive is present
+        any({{dx_column}} %in% ADHD_PI) ~ "Inattentive",
+        # ADHD = "Hyperactive" if hyperactive is present
+        any({{dx_column}} %in% ADHD_H) ~ "Hyperactive",
+        # ADHD = "Unspecified" if only unspecified diagnoses are present
+        any({{dx_column}} %in% ADHD_U) ~ "Unspecified",
+        TRUE ~ "None"
+      )) %>%
+   summarize("ADHD_subtype" = first(ADHD), .groups = "drop")
+}
+# Define function: extract_substance_dependence()
+extract_substance_dependence <- function(data, id_column, dx_column) {
+
+  data %>%
+    select({{id_column}}, {{dx_column}}) %>%
+    distinct() %>%
+    group_by({{id_column}}) %>%
+    mutate(
+      alcohol_dependence = str_detect({{dx_column}},
+                              regex("alcohol dependence|alcoholism|alcohol abuse",
+                              ignore_case = TRUE)
+                            ),
+      cannabis_dependence = str_detect({{dx_column}},
+                              regex("cannabis dependence",
+                              ignore_case = TRUE)
+                            ),
+      cocaine_dependence = str_detect({{dx_column}},
+                              regex("cocaine dependence",
+                              ignore_case = TRUE)
+                            ),
+      nicotine_dependence = str_detect({{dx_column}},
+                              regex("nicotine dependence|tobacco dependence",
+                              ignore_case = TRUE)
+                            ),
+      opioid_dependence = str_detect({{dx_column}},
+                              regex("heroin dependence|opioid dependence",
+                              ignore_case = TRUE)
+                            )
+    ) %>%
+    select({{id_column}}, alcohol_dependence:opioid_dependence) %>%
+    summarize(
+      across(alcohol_dependence:opioid_dependence,
+         ~any(.x)), 
+         .groups = "drop")
+}
