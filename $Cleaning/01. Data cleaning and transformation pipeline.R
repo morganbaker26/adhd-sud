@@ -1,3 +1,5 @@
+# Version 1.0
+
 # This script assumes that you've already run '00. Setup.R'.
 
 # This script assumes that the required All of Us data is already loaded. 
