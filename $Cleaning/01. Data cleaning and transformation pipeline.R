@@ -119,6 +119,13 @@ condition <- full_join(subtype, dependence, by = "person_id")
 # Create complete dataset
 ADHD_SUD_df <- left_join(demographic, condition, by = "person_id")
 
-# Replace NAs in ADHD_subtype column with "None"
-ADHD_SUD_tidy_df <- ADHD_SUD_tidy_df %>%
-  mutate(ADHD_subtype = replace_na(ADHD_subtype, "None"))
+# Replace NAs
+ADHD_SUD_tidy_df <- ADHD_SUD_df %>%
+  mutate(
+    ADHD_subtype = replace_na(ADHD_subtype, "None"),
+    alcohol_dependence = replace_na(alcohol_dependence, FALSE),
+    cannabis_dependence = replace_na(cannabis_dependence, FALSE),
+    cocaine_dependnece = replace_na(cocaine_dependence, FALSE),
+    nicotine_dependence = replace_na(nicotine_dependence, FALSE),
+    opioid_dependnece = replace_na(opioid_dependence, FALSE)
+    )
