@@ -129,3 +129,28 @@ ADHD_SUD_tidy_df <- ADHD_SUD_df %>%
     nicotine_dependence = replace_na(nicotine_dependence, FALSE),
     opioid_dependnece = replace_na(opioid_dependence, FALSE)
     )
+
+## Recode values for clarity
+ADHD_SUD <- ADHD_SUD %>%
+  mutate(
+    # Recode exposure column, rename to "group"
+    group = case_when(                  
+              exposure == 0 ~ "Controls",
+              exposure == 1 ~ "ADHD"),
+    # Rename observation_datetime to "zip_observation_date", keep year only
+    zip_observation_date = year(observation_datetime),
+    # Replace NAs with "None" in ADHD_subtype column
+    ADHD_subtype = replace_na(ADHD_subtype, "None"),
+    # Replace NAs with FALSE in dependence columns
+    dependence_alcohol = replace_na(alcohol_dependence, FALSE),
+    dependence_cannabis = replace_na(cannabis_dependence, FALSE),
+    dependence_cocaine = replace_na(cocaine_dependence, FALSE),
+    dependence_nicotine = replace_na(nicotine_dependence, FALSE),
+    dependence_opioid = replace_na(opioid_dependence, FALSE)
+    )
+
+## Remove unneeded columns
+ADHD_SUD <- ADHD_SUD %>%
+  select(-distance, -subclass, -observation_datetime, -exposure, -weights,
+         -alcohol_dependence, -cannabis_dependence, -cocaine_dependence,
+         -nicotine_dependence, -opioid_dependence)
