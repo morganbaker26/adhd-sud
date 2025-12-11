@@ -3,6 +3,7 @@
 
 # Designed to work with ADHD_SUD_tidy_df.csv
 
+## Define function xtab_dependence_by_demographic()
 xtab_dependence_by_demographic <- function(data, demographic_var) {
 
 table_dependence_by_demographic <- data %>%
@@ -21,3 +22,16 @@ table_dependence_by_demographic <- data %>%
   arrange(group, {{demographic_var}}, substance,
           count, n_grouptotal, prevalence_per_100)
 }
+
+## Generate tables
+  # Sex at birth
+  tbl_dependence_sexatbirth <- table_dependence_by_demographic(ADHD_SUD, sex_at_birth)
+  # Gender
+  tbl_dependence_gender <- table_dependence_by_demographic(ADHD_SUD, gender)
+  # Race
+  tbl_dependence_race <- table_dependence_by_demographic(ADHD_SUD, race)
+  # Ethnicity
+  tbl_dependence_ethnicity <- table_dependence_by_demographic(ADHD_SUD, ethnicity)
+  # Self-reported race/ethnicity
+  tbl_dependence_selfreportedcategory <- table_dependence_by_demographic(ADHD_SUD, self_reported_category) 
+
