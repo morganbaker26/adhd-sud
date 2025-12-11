@@ -25,13 +25,13 @@ table_dependence_by_demographic <- data %>%
 
 ## Generate tables
   # Sex at birth
-  tbl_dependence_sexatbirth <- table_dependence_by_demographic(ADHD_SUD, sex_at_birth)
+  tbl_dependence_sexatbirth <- xtab_dependence_by_demographic(ADHD_SUD, sex_at_birth)
   # Gender
-  tbl_dependence_gender <- table_dependence_by_demographic(ADHD_SUD, gender)
+  tbl_dependence_gender <- xtab_dependence_by_demographic(ADHD_SUD, gender)
   # Race
-  tbl_dependence_race <- table_dependence_by_demographic(ADHD_SUD, race)
+  tbl_dependence_race <- xtab_dependence_by_demographic(ADHD_SUD, race)
   # Ethnicity
-  tbl_dependence_ethnicity <- table_dependence_by_demographic(ADHD_SUD, ethnicity)
+  tbl_dependence_ethnicity <- xtab_dependence_by_demographic(ADHD_SUD, ethnicity)
   # Self-reported race/ethnicity
-  tbl_dependence_selfreportedcategory <- table_dependence_by_demographic(ADHD_SUD, self_reported_category) 
+  tbl_dependence_selfreportedcategory <- xtab_dependence_by_demographic(ADHD_SUD, self_reported_category) 
 
