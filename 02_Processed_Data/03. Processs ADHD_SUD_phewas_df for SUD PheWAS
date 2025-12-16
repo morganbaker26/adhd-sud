@@ -1,0 +1,17 @@
+SUD_phewas_df <- ADHD_SUD_phewas_df %>%
+  # If any dependence is TRUE, new column dependence_any = TRUE
+  mutate(dependence_any = case_when(
+    dependence_alcohol == TRUE |
+    dependence_cannabis == TRUE |
+    dependence_cocaine == TRUE |
+    dependence_nicotine == TRUE |
+    dependence_opioid == TRUE ~ TRUE
+  )) %>%
+  
+  # Filter to retain ONLY individuals with at least one documented SUD
+  filter(dependence_any == TRUE) %>%
+  
+  # Convert dependence columns to numeric (PheTK requirement)
+  # TRUE = 1, FALSE = 0
+  mutate(across(dependence_alcohol:dependence_opioid, as.numeric))
+  
