@@ -1,0 +1,14 @@
+library(tidyverse)
+
+# Load tidy dataset
+ADHD_SUD_tidy_df <- read_csv("ADHD_SUD_tidy_df.csv")
+
+# Create ADHD_SUD_phewas_df
+ADHD_SUD_phewas_df <- ADHD_SUD_tidy_df %>%
+  # Filter sex_at_birth
+  filter(sex_at_birth %in% c("Male","Female")) %>%
+  # Add new column for sex at birth: Male = 0, Female = 1
+    # (PheTK requirement)
+  mutate(sex_binary = case_when(
+                      sex_at_birth == 'Male' ~ 0,
+                      sex_at_birth == 'Female' ~ 1))
