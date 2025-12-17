@@ -9,4 +9,4 @@
 * n ADHD = 3,233
 * n no-ADHD = 7,424
 
-Generated used PheTK. Code [here] (https://github.com/morganbaker26/adhd-sud/blob/main/03_Analysis/PheTK%20for%20general%20population%20and%20SUD-enriched%20cohorts.ipynb).
+Generated used PheTK. Code [here](https://github.com/morganbaker26/adhd-sud/blob/main/03_Analysis/PheTK%20for%20general%20population%20and%20SUD-enriched%20cohorts.ipynb).
